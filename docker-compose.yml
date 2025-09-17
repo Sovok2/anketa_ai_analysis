@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    image: my-go-app:latest
+    restart: unless-stopped
+    env_file: .env # дефолты (без секретов)
+    environment:
+      # Динамические значения с дефолтами:
+      PROVIDER: ${PROVIDER:-openai}
+      MODEL: ${MODEL:-openai/gpt-4o}
+      PORT: ${PORT:-8080}
+
+      # Путь к секретам
+      OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+      DEEPSEEK_API_KEY_FILE: /run/secrets/deepseek_api_key
+    secrets:
+      - openai_api_key
+      - deepseek_api_key
+    expose:
+      - "3282"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      # Добавите "443:443", когда подключите TLS
+    environment:
+      SERVER_NAME: ${SERVER_NAME:89.105.223.201}
+      UPSTREAM: app:3282
+      # Встроенный механизм шаблонов в официальном образе nginx
+      NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates
+      NGINX_ENVSUBST_TEMPLATE_SUFFIX: ".template"
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/conf.d
+    volumes:
+      - ./nginx:/etc/nginx/templates:ro
+
+secrets:
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt
+  deepseek_api_key:
+    file: ./secrets/deepseek_api_key.txt

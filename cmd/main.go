@@ -57,7 +57,7 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	// Хендлер
-	r.Post("/anketa/analysis", handler.NewAnalysisHandler(svc))
+	r.Post("/analysis", handler.NewAnalysisHandler(svc))
 
 	// Healthcheck
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
