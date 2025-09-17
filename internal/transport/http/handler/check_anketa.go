@@ -43,6 +43,13 @@ func NewAnalysisHandler(svc anketa.Analysis) stdhttp.HandlerFunc {
 		}
 
 		// валидация (минимальная)
+		if len(req.Answers) == 0 {
+			writeJSON(w, stdhttp.StatusBadRequest, errorResponse{
+				Error:   "validation_error",
+				Details: "answers must contain at least one element",
+			})
+			return
+		}
 		if strings.TrimSpace(req.Answers[0].QuestionText) == "" {
 			writeJSON(w, stdhttp.StatusBadRequest, errorResponse{
 				Error:   "validation_error",
