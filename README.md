@@ -1,0 +1,1 @@
+# anketa_ai_analysis
