@@ -21,7 +21,4 @@ ENV PORT=3282
 EXPOSE 3282
 USER app
 
-# Опционально: healthcheck (если есть /health)
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1:${PORT}/health || exit 1
-
 ENTRYPOINT ["/app/server"]

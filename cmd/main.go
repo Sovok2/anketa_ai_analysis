@@ -34,8 +34,8 @@ func main() {
 	color.Green("✅ .env loaded successfully")
 
 	// Читаем конфигурацию
-	modelName := os.Getenv("DEEPSEEK_CHAT")
-	provider := os.Getenv("DEEPSEEK")
+	modelName := os.Getenv("MODEL")
+	provider := os.Getenv("PROVIDER")
 	port := os.Getenv("PORT")
 
 	color.Blue("🔧 Configuration:")

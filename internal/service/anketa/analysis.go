@@ -50,6 +50,9 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 		ai.WithOutputType(DTO_llm.Response{}),
 	)
 
+	fmt.Printf("resp.Usage.InputTokens: %v\n", resp.Usage.InputTokens)
+	fmt.Printf("resp.Usage.OutputTokens: %v\n", resp.Usage.OutputTokens)
+
 	if err != nil {
 		color.Red(fmt.Sprintf("Ошибка при работе с моделью - %v", err))
 		return DTO_llm.Response{
