@@ -29,7 +29,7 @@ func main() {
 	// Загружаем .env
 	color.Yellow("📦 Loading .env file...")
 	if err := godotenv.Load(); err != nil {
-		log.Println("Error loading .env file: %v", err)
+		log.Printf("Error loading .env file: %v", err)
 	}
 	color.Green("✅ .env loaded successfully")
 
