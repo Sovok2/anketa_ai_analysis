@@ -2,7 +2,9 @@ package anketa
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/fatih/color"
 	"github.com/firebase/genkit/go/ai"
@@ -51,13 +53,15 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 	)
 
 	if resp == nil {
-		fmt.Println("resp is nil")
+		log.Printf("genkit.Generate returned nil resp (model=%s)", a.modelName)
+		return response, errors.New("empty response from LLM provider")
 	}
+
 	if resp.Usage == nil {
-		fmt.Println("resp.Usage is null")
+		log.Printf("token usage is nil (model=%s)", a.modelName)
+	} else {
+		log.Printf("usage in=%d out=%d", resp.Usage.InputTokens, resp.Usage.OutputTokens)
 	}
-	fmt.Printf("resp.Usage.InputTokens: %v\n", resp.Usage.InputTokens)
-	fmt.Printf("resp.Usage.OutputTokens: %v\n", resp.Usage.OutputTokens)
 
 	if err != nil {
 		color.Red(fmt.Sprintf("Ошибка при работе с моделью - %v", err))
