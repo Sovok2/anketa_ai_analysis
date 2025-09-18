@@ -50,8 +50,11 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 		ai.WithOutputType(DTO_llm.Response{}),
 	)
 
-	if resp == nil || resp.Usage == nil {
-		fmt.Println("resp or resp.Usage is nil")
+	if resp == nil {
+		fmt.Println("resp is nil")
+	}
+	if resp.Usage == nil {
+		fmt.Println("resp.Usage is null")
 	}
 	fmt.Printf("resp.Usage.InputTokens: %v\n", resp.Usage.InputTokens)
 	fmt.Printf("resp.Usage.OutputTokens: %v\n", resp.Usage.OutputTokens)
