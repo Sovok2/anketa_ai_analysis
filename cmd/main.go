@@ -29,7 +29,7 @@ func main() {
 	// Загружаем .env
 	color.Yellow("📦 Loading .env file...")
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("❌ Error loading .env file: %v", err)
+		log.Println("Error loading .env file: %v", err)
 	}
 	color.Green("✅ .env loaded successfully")
 
@@ -57,10 +57,10 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	// Хендлер
-	r.Post("/analysis", handler.NewAnalysisHandler(svc))
+	r.Post("/api/analysis", handler.NewAnalysisHandler(svc))
 
 	// Healthcheck
-	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
