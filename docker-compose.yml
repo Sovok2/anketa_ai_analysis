@@ -27,10 +27,10 @@ services:
     depends_on:
       - app
     ports:
-      - "80:80"
+      - "8089:80"
       # Добавите "443:443", когда подключите TLS
     environment:
-      SERVER_NAME: ${SERVER_NAME:89.105.223.201}
+      SERVER_NAME: ${SERVER_NAME}
       UPSTREAM: app:3282
       # Встроенный механизм шаблонов в официальном образе nginx
       NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates
