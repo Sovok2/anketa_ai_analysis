@@ -53,7 +53,7 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 	)
 
 	if resp == nil {
-		log.Printf("genkit.Generate returned nil resp (model=%s)", a.modelName)
+		log.Printf("genkit.Generate returned nil resp (error=%v)", err)
 		return response, errors.New("empty response from LLM provider")
 	}
 
