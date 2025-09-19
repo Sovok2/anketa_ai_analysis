@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/firebase/genkit/go/ai"
@@ -34,53 +35,99 @@ func NewAnalysis(modelName string, provider string) Analysis {
 
 func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_llm.Response, error) {
 	var response DTO_llm.Response
+	const maxAttempt = 5
 
-	// Инициализация модели
+	// Ретраи инициализации модели
 	llmService := service_llm.NewInitModel(a.modelName, a.provider)
-	g, err := llmService.Init(ctx)
-	if err != nil {
-		return response, fmt.Errorf("failed to initialize model: %w", err)
+	var (
+		g   *genkit.Genkit
+		err error
+	)
+	for i := 1; i <= maxAttempt; i++ {
+		if ctx.Err() != nil {
+			return response, ctx.Err()
+		}
+		g, err = llmService.Init(ctx)
+		if err == nil {
+			break
+		}
+
+		if i > 2 {
+			llmService := service_llm.NewInitModel("deepseek/deepseek-chat", "deepseek")
+			g, err = llmService.Init(ctx)
+			if err != nil {
+				color.Yellow(fmt.Sprintf("Была использована резервная модель deepseek после 2 неудачных попыток обращения к %s", a.modelName))
+				break
+			}
+		}
+
+		if i == maxAttempt {
+			return response, fmt.Errorf("failed to initialize model after %d attempts: %w", i, err)
+		}
+		time.Sleep(time.Duration(1<<uint(i-1)) * 200 * time.Millisecond) // экспоненциальная пауза
 	}
 
 	color.Yellow(fmt.Sprintf("Определена модель - %s\nОтправляем запрос к модели", a.modelName))
-	// Запрос к модели
+
+	// Ретраи запроса к модели (и парсинга ответа)
 	userPrompt := a.buildUserPrompt(request)
-	resp, err := genkit.Generate(ctx, g,
-		ai.WithSystem(config_llm.Prompt),
-		ai.WithPrompt(userPrompt),
-		ai.WithModelName(a.modelName),
-		ai.WithOutputType(DTO_llm.Response{}),
-	)
+	for i := 1; i <= maxAttempt; i++ {
+		if ctx.Err() != nil {
+			return response, ctx.Err()
+		}
 
-	if resp == nil {
-		log.Printf("genkit.Generate returned nil resp (model=%s)", a.modelName)
-		return response, errors.New("empty response from LLM provider")
+		resp, genErr := genkit.Generate(
+			ctx,
+			g,
+			ai.WithSystem(config_llm.Prompt),
+			ai.WithPrompt(userPrompt),
+			ai.WithModelName(a.modelName),
+			ai.WithOutputType(DTO_llm.Response{}),
+		)
+
+		if resp == nil {
+			log.Printf("genkit.Generate returned nil resp (model=%s)", a.modelName)
+		} else if resp.Usage == nil {
+			log.Printf("token usage is nil (model=%s)", a.modelName)
+		} else {
+			log.Printf("usage in=%d out=%d", resp.Usage.InputTokens, resp.Usage.OutputTokens)
+		}
+
+		// Ошибка генерации или пустой ответ — ретраим
+		if genErr != nil || resp == nil {
+			if genErr != nil {
+				color.Red(fmt.Sprintf("Ошибка при работе с моделью - %v", genErr))
+			}
+			if i == maxAttempt {
+				return DTO_llm.Response{
+						DetailedReport: "Произошла ошибка при анализе",
+						Resume:         "Произошла ошибка при анализе",
+					},
+					fmt.Errorf("generation failed after %d attempts: %w", i, genErr)
+			}
+			time.Sleep(time.Duration(1<<uint(i-1)) * 200 * time.Millisecond)
+			continue
+		}
+
+		// Парсинг вывода — тоже ретраим при ошибке
+		if outErr := resp.Output(&response); outErr != nil {
+			color.Red(fmt.Sprintf("Ошибка при парсинге ответа от модели - %v", outErr))
+			if i == maxAttempt {
+				return DTO_llm.Response{
+						DetailedReport: "Произошла ошибка при парсинге ответов от ИИ",
+						Resume:         "Произошла ошибка при парсинге ответов от ИИ",
+					},
+					fmt.Errorf("parse failed after %d attempts: %w", i, outErr)
+			}
+			time.Sleep(time.Duration(1<<uint(i-1)) * 200 * time.Millisecond)
+			continue
+		}
+
+		color.Green("Ответ от ИИ был успешно получен!")
+		return response, nil
 	}
 
-	if resp.Usage == nil {
-		log.Printf("token usage is nil (model=%s)", a.modelName)
-	} else {
-		log.Printf("usage in=%d out=%d", resp.Usage.InputTokens, resp.Usage.OutputTokens)
-	}
-
-	if err != nil {
-		color.Red(fmt.Sprintf("Ошибка при работе с моделью - %v", err))
-		return DTO_llm.Response{
-			DetailedReport: "Произошла ошибка при анализе",
-			Resume:         "Произошла ошибка при анализе",
-		}, fmt.Errorf("generation failed: %w", err)
-	}
-
-	if err := resp.Output(&response); err != nil {
-		color.Red(fmt.Sprintf("Ошибка при парсинге ответа от модели - %v", err))
-		return DTO_llm.Response{
-			DetailedReport: "Произошла ошибка при парсинге ответов от ИИ",
-			Resume:         "Произошла ошибка при парсинге ответов от ИИ",
-		}, fmt.Errorf("generation failed: %w", err)
-	}
-
-	color.Green("Ответ от ИИ был успешно получен!")
-	return response, nil
+	return response, errors.New("unreachable")
 }
 
 func (a *analysis) buildUserPrompt(request DTO_http.Request) string {
