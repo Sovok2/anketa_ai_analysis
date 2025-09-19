@@ -52,12 +52,14 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 			break
 		}
 
+		// fallback после 2 неудачных попыток
 		if i > 2 {
-			llmService := service_llm.NewInitModel("deepseek/deepseek-chat", "deepseek")
+			color.Yellow(fmt.Sprintf("Переключаемся на резервную модель deepseek после %d неудачных попыток", i))
+			a.modelName = "deepseek/deepseek-chat"
+			llmService = service_llm.NewInitModel(a.modelName, "deepseek")
 			g, err = llmService.Init(ctx)
-			if err != nil {
-				color.Yellow(fmt.Sprintf("Была использована резервная модель deepseek после 2 неудачных попыток обращения к %s", a.modelName))
-				break
+			if err == nil {
+				break // успешно инициализировали резервную модель
 			}
 		}
 
