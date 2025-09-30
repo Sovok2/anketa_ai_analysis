@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/fatih/color v1.18.0
-	github.com/firebase/genkit/go v1.0.3
+	github.com/firebase/genkit/go v1.0.4
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/joho/godotenv v1.5.1
 	github.com/openai/openai-go v1.8.2
