@@ -9,6 +9,7 @@ import (
 	"time"
 
 	DTO_http "anketa_ai_analysis/internal/DTO/http"
+	"anketa_ai_analysis/internal/config/llm"
 	"anketa_ai_analysis/internal/service/anketa"
 )
 
@@ -58,6 +59,15 @@ func NewAnalysisHandler(svc anketa.Analysis) stdhttp.HandlerFunc {
 			return
 		}
 
+		// Валидация типа анкеты
+		type_key := strings.TrimSpace(req.Type)
+		if value, exists := llm.PromptMap[type_key]; !exists || value == "" {
+			writeJSON(w, stdhttp.StatusBadRequest, errorResponse{
+				Error:   "validation_error",
+				Details: "type is invalid or not supported",
+			})
+			return
+		}
 		// контекст с таймаутом на запрос к LLM
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 		defer cancel()
