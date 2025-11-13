@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/fatih/color"
@@ -65,10 +68,36 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// Запуск сервера
+	// Создаем сервер с настройками
 	addr := ":" + port
-	color.Magenta("🌐 Server starting on http://localhost%s", addr)
-	if err := http.ListenAndServe(addr, r); err != nil {
-		log.Fatalf("❌ Server failed to start: %v", err)
+	server := &http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+
+	// Канал для graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// Запускаем сервер в горутине
+	go func() {
+		color.Magenta("🌐 Server starting on http://localhost%s", addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("❌ Server failed to start: %v", err)
+		}
+	}()
+
+	// Ждем сигнал завершения
+	<-stop
+	color.Yellow("\n🛑 Received shutdown signal...")
+
+	// Graceful shutdown с таймаутом
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("❌ Server shutdown error: %v", err)
+	} else {
+		color.Green("✅ Server stopped gracefully")
 	}
 }
