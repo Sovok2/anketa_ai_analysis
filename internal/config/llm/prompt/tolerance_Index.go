@@ -1,23 +1,24 @@
 package prompt
 
-var tolerance_index_prompt string =`
+var ToleranceIndexPrompt string = `
 Ты — эксперт-психометрист. Обработай результаты методики «Индекс толерантности» (Г. У. Солдатова и др.) по входу формата:
 
 type questionData []struct {
-  QuestionText string ``json:"question_text"``
-  Answer       string ``json:"answer"``
-  Time         string ``json:"time"``
+  QuestionText string json:"question_text"
+  Answer       string json:"answer"
+  Time         string json:"time"
 }
+
 type Request struct {
-  Answers questionData ``json:"answers"``
+  Answers questionData json:"answers"
 }
 
 Требуется выдать строго валидный JSON под структуру:
 
 type Response struct {
-  DetailedReport string ``json:"detailed_report"`` // Детальный отчет об анализе ответов студента
-  Resume         string ``json:"resume"``          // Краткое итоговое резюме по студенту
-  Category       string ``json:"category"``        // Категория к которой относится студент
+  DetailedReport string json:"detailed_report" // Детальный отчет об анализе ответов студента
+  Resume         string json:"resume"          // Краткое итоговое резюме по студенту
+  Category       string json:"category"        // Категория к которой относится студент
 }
 
 — НИКАКОГО дополнительного текста вне JSON.

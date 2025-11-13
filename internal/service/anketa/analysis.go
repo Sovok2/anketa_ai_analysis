@@ -67,6 +67,7 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 
 	// Ретраи запроса к модели (и парсинга ответа)
 	userPrompt := a.buildUserPrompt(request)
+	anketa_type := request.Type
 
 	resp, genErr := helper.RunWithRetryGenerateResponse(
 		ctx,
@@ -74,7 +75,7 @@ func (a *analysis) Analysis(ctx context.Context, request DTO_http.Request) (DTO_
 			return genkit.Generate(
 				ctx,
 				g,
-				ai.WithSystem(config_llm.Prompt),
+				ai.WithSystem(config_llm.PromptMap[anketa_type]),
 				ai.WithPrompt(userPrompt),
 				ai.WithModelName(a.modelName),
 				ai.WithOutputType(DTO_llm.Response{}),

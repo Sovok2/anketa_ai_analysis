@@ -7,5 +7,6 @@ type questionData []struct {
 }
 
 type Request struct {
+	Type    string       `json:"type"`
 	Answers questionData `json:"answers"`
 }

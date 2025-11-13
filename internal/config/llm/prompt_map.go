@@ -1,12 +1,14 @@
 package llm
 
 import (
-	"anketa_ai_analysis/config/llm/prompt"
+	"anketa_ai_analysis/internal/config/llm/prompt"
 )
 
-prompt_map := map[string]string {
-	"diviant": prompt.
-	"adaptability_monitoring": prompt,
-	"tolerance_index": prompt,
-
+var PromptMap = map[string]string{
+	"Девиантное поведение":              prompt.DiviantPrompt,
+	"Индекс толерантности":              prompt.ToleranceIndexPrompt,
+	"Адаптированность студентов в вузе": prompt.AdaptabilityMonitoring,
+	"Суицидальный риск":                 prompt.SuicideRisk,
+	"Шкала самоуважения Розенберга":     prompt.Rosenberg,
+	"Опросник Г. Айзенка":               prompt.Aizek,
 }
